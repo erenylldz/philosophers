@@ -6,7 +6,7 @@
 /*   By: eryildiz <eryildiz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/20 18:08:08 by eryildiz          #+#    #+#             */
-/*   Updated: 2024/06/12 17:46:35 by eryildiz         ###   ########.fr       */
+/*   Updated: 2024/09/11 18:27:24 by eryildiz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ long	ft_atoi(const char *str)
 	return (i * negative);
 }
 
-unsigned long	updater(t_data *data)
+long	updater(t_data *data)
 {
 	unsigned long	time;
 
@@ -46,7 +46,7 @@ unsigned long	updater(t_data *data)
 
 void	ms_slepp(t_data *data, unsigned long time)
 {
-	unsigned long	life;
+	long	life;
 
 	life = updater(data) + time;
 	while (life > updater(data))
@@ -62,7 +62,7 @@ void	*philo_life(void *ph)
 	{
 		pthread_mutex_lock(&philo->philo_data->forks[philo->philo_inx]);
 		printf("%d has taken a fork\n", philo->philo_inx + 1);
-		pthread_mutex_lock(&philo->philo_data->forks[philo->philo_inx + 1]);
+		pthread_mutex_lock(&philo->philo_data->forks[(philo->philo_inx + 1) % philo->philo_data->nbr_philo]);
 		printf("%d has taken a fork\n", philo->philo_inx + 1);
 		printf("%d has eating\n", philo->philo_inx + 1);
 		pthread_mutex_lock(&philo->philo_data->is_eat);
@@ -72,8 +72,9 @@ void	*philo_life(void *ph)
 		ms_slepp(philo->philo_data, philo->philo_data->timer.eating);
 		printf("%d has sleeping\n", philo->philo_inx + 1);
 		pthread_mutex_unlock(&philo->philo_data->forks[philo->philo_inx]);
-		pthread_mutex_unlock(&philo->philo_data->forks[philo->philo_inx + 1]);
+		pthread_mutex_unlock(&philo->philo_data->forks[(philo->philo_inx + 1) % philo->philo_data->nbr_philo]);
 		ms_slepp(philo->philo_data, philo->philo_data->timer.sleeping);
 		printf("%d is thinking \n", philo->philo_inx);
 	}
+	return (NULL);
 }

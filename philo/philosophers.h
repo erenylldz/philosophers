@@ -6,7 +6,7 @@
 /*   By: eryildiz <eryildiz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/12 18:08:04 by eryildiz          #+#    #+#             */
-/*   Updated: 2024/06/12 19:32:27 by eryildiz         ###   ########.fr       */
+/*   Updated: 2024/09/11 18:01:31 by eryildiz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,11 +54,11 @@ typedef struct s_philosophers
 }	t_philo;
 
 void			free_mutex_philos(t_data *data);
-unsigned long	updater(t_data *data);
+long			updater(t_data *data);
 long			ft_atoi(const char *str);
 int				data_init(t_data *data, char **av);
 void			ms_slepp(t_data *data, unsigned long time);
-void			main_loop(t_data *data);
 void			*philo_life(void *philo);
-
+int				start_forks_philos(t_data *data);
+int				arg_check(char **av);
 #endif

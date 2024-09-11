@@ -6,7 +6,7 @@
 /*   By: eryildiz <eryildiz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/20 18:11:13 by eryildiz          #+#    #+#             */
-/*   Updated: 2024/06/12 19:34:35 by eryildiz         ###   ########.fr       */
+/*   Updated: 2024/09/11 18:01:34 by eryildiz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ int	data_init(t_data *data, char **av)
 		return (free_mutex_philos(data), 1);
 	if (start_forks_philos(data) == 1)
 		return (free_mutex_philos(data), 1);
+	return (-1);
 }
 
 void	free_mutex_philos(t_data *data)
@@ -79,23 +80,25 @@ int	start_forks_philos(t_data *data)
 	while (++i < data->nbr_philo)
 	{
 		data->philo[i].philo_inx = i;
-		data->philo[i].last_meat = updater(data);
 		data->philo[i].philo_data = data;
+		data->philo[i].last_meat = updater(data);
 		if (pthread_create(&data->philo->thread, NULL,
 				philo_life, data->philo) != 0)
 			return (free_mutex_philos(data), 1);
+		usleep(100);
 	}
+	return (-1);
 }
 
 int	main(int ac, char **av)
 {
 	t_data	*data;
 
-	if (ac != 5 || ac != 6)
+	if (ac != 5 && ac != 6)
 		return (0);
 	data = malloc(sizeof(t_data));
 	if (!data)
-		return ;
+		return (-1);
 	data->write_bool = false;
 	data->eat_bool = false;
 	if (arg_check(av) == 1)
@@ -130,31 +133,5 @@ int	arg_check(char **av)
 		}
 		i++;
 	}
-}
-
-void	main_loop(t_data *data)
-{
-	int	i;
-
-	i = 1;
-	(void)data;
-	while (1)
-	{
-		pthread_mutex_lock(&data->is_eat);
-		if (data->timer.max_eat != 1 && data->eat_count
-			>= data->timer.max_eat * data->nbr_philo)
-		{
-			pthread_mutex_lock(&data->write_mutex);
-			return ;
-		}
-		if (updater(data) - data->philo[i % data->nbr_philo].last_meat
-			>= data->timer.t_die)
-		{
-			pthread_mutex_lock(&data->write_mutex);
-			return ;
-		}
-		pthread_mutex_unlock(&data->is_eat);
-		i++;
-		usleep(100);
-	}
+	return(-1);
 }

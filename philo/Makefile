@@ -1,21 +1,21 @@
-NAME	=	philo
-SRC		=	arg_control.c main.c
-OBJS 	= 	$(SRC:.c=.o)
-CC 		= 	gcc
-CFLAGS 	= 	-Wall -Wextra -Werror
-RM	 	= 	rm -rf
+NAME = philo
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -pthread
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+SRCS = main.c arg_control.c
+OBJS = $(SRCS:.c=.o)
 
 all: $(NAME)
 
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJS)
+
 clean:
-	$(RM) $(OBJS)
+	rm -f $(OBJS)
 
-fclean:	clean
-	$(RM) $(NAME)
+fclean: clean
+	rm -f $(NAME)
 
-re:	fclean all
+re: fclean all
 
-.PHONY:	all clean fclean re
+.PHONY: clean fclean all re
