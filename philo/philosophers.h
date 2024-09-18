@@ -6,59 +6,67 @@
 /*   By: eryildiz <eryildiz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/12 18:08:04 by eryildiz          #+#    #+#             */
-/*   Updated: 2024/09/11 18:01:31 by eryildiz         ###   ########.fr       */
+/*   Updated: 2024/09/17 18:21:38 by eryildiz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILOSOPHERS_H
 # define PHILOSOPHERS_H
 
-# include <unistd.h>
-# include <stdlib.h>
 # include <pthread.h>
-# include <sys/time.h>
 # include <stdio.h>
-# include <stdbool.h>
+# include <stdlib.h>
+# include <sys/time.h>
+# include <unistd.h>
 
-typedef struct s_time
+# define FORK "has taken a fork"
+# define EATING "is eating"
+# define SLEEPING "is sleeping"
+# define THINKING "is thinking"
+# define DEAD "died"
+
+typedef struct s_philo
 {
-	long	eating;
-	long	sleeping;
-	long	t_die;
-	long	s_time;
-	long	max_eat;
-}	t_time;
+	char			*step;
+	int				idx;
+	int				fork1;
+	int				fork2;
+	int				eat_count;
+	long			last_eat;
+	long			start;
+	pthread_mutex_t	last_eat_m;
+	pthread_t		thread;
+	struct s_data	*data;
+}					t_philo;
 
 typedef struct s_data
 {
-	struct s_philosophers	*philo;
-	t_time					timer;
-	long					eat_count;
-	int						nbr_philo;
-	struct timeval			tv;
-	pthread_mutex_t			*forks;
-	pthread_mutex_t			is_eat;
-	pthread_mutex_t			write_mutex;
-	bool					write_bool;
-	bool					eat_bool;
-	bool					*forks_bool;
-}	t_data;
+	int				life_time;
+	int				nbr_philo;
+	int				sleep_time;
+	int				eat_time;
+	int				must_eat;
+	int				dead;
+	int				is_dead;
+	pthread_mutex_t	print;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	dead_m;
+	pthread_mutex_t	philo_count;
+	t_philo			*philo;
+}					t_data;
 
-typedef struct s_philosophers
-{
-	int			philo_inx;
-	long		last_meat;
-	int			is_dead;
-	pthread_t	thread;
-	t_data		*philo_data;
-}	t_philo;
-
-void			free_mutex_philos(t_data *data);
-long			updater(t_data *data);
-long			ft_atoi(const char *str);
-int				data_init(t_data *data, char **av);
-void			ms_slepp(t_data *data, unsigned long time);
-void			*philo_life(void *philo);
-int				start_forks_philos(t_data *data);
-int				arg_check(char **av);
+int		check_arg(char	**av);
+void	data_init(t_data *data, char **av);
+void	init_philo(t_data *data);
+int		start_thread(t_data *data);
+void	tracking_thread(t_data *data);
+void	print_step(t_philo *philo, char *step);
+void	*routine(void	*ptr);
+void	philo_loop(t_data *data, t_philo *philo);
+int		check_eat(t_philo *philo, t_data *data);
+long	ft_atol(const char *str);
+void	destroy_data(t_data *data);
+long	get_time(void);
+void	ft_usleep(long long time);
+int		is_valid_args(t_data *data);
 #endif

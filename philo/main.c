@@ -6,132 +6,109 @@
 /*   By: eryildiz <eryildiz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/20 18:11:13 by eryildiz          #+#    #+#             */
-/*   Updated: 2024/09/11 18:01:34 by eryildiz         ###   ########.fr       */
+/*   Updated: 2024/09/17 18:26:55 by eryildiz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-int	data_init(t_data *data, char **av)
-{
-	data->eat_count = 0;
-	data->nbr_philo = ft_atoi(av[1]);
-	data->timer.t_die = ft_atoi(av[2]);
-	data->timer.eating = ft_atoi(av[3]);
-	data->timer.sleeping = ft_atoi(av[4]);
-	data->timer.max_eat = -1;
-	if (av[5] != NULL)
-		data->timer.max_eat = ft_atoi(av[5]);
-	if (data->timer.max_eat == 0)
-		return (1);
-	if (pthread_mutex_init(&data->is_eat, NULL) != 0)
-		return (1);
-	data->eat_bool = true;
-	if (pthread_mutex_init(&data->write_mutex, NULL) != 0)
-		return (1);
-	data->write_bool = true;
-	data->forks = malloc(sizeof(pthread_mutex_t) * data->nbr_philo);
-	if (!data->forks)
-		return (1);
-	data->philo = malloc(sizeof(t_philo) * data->nbr_philo);
-	if (!data->philo)
-		return (free_mutex_philos(data), 1);
-	if (start_forks_philos(data) == 1)
-		return (free_mutex_philos(data), 1);
-	return (-1);
-}
-
-void	free_mutex_philos(t_data *data)
-{
-	int	i;
-
-	i = -1;
-	if (data->forks)
-		free(data->forks);
-	if (data->philo)
-		free(data->philo);
-	if (data->eat_bool == true)
-		pthread_mutex_destroy(&data->is_eat);
-	if (data->write_bool == true)
-		pthread_mutex_destroy(&data->write_mutex);
-	while (++i <= data->nbr_philo)
-		if (data->forks_bool[i] == true)
-			pthread_mutex_destroy(&data->forks[i]);
-}
-
-int	start_forks_philos(t_data *data)
-{
-	int	i;
-
-	i = -1;
-	data->forks_bool = malloc(sizeof(bool) * data->nbr_philo);
-	if (!data->forks_bool)
-		return (1);
-	while (++i <= data->nbr_philo)
-		data->forks_bool[i] = false;
-	i = -1;
-	while (++i <= data->nbr_philo)
-	{
-		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
-			return (1);
-		data->forks_bool[i] = true;
-	}
-	i = -1;
-	while (++i < data->nbr_philo)
-	{
-		data->philo[i].philo_inx = i;
-		data->philo[i].philo_data = data;
-		data->philo[i].last_meat = updater(data);
-		if (pthread_create(&data->philo->thread, NULL,
-				philo_life, data->philo) != 0)
-			return (free_mutex_philos(data), 1);
-		usleep(100);
-	}
-	return (-1);
-}
-
 int	main(int ac, char **av)
 {
-	t_data	*data;
+	t_data	data;
 
 	if (ac != 5 && ac != 6)
-		return (0);
-	data = malloc(sizeof(t_data));
-	if (!data)
-		return (-1);
-	data->write_bool = false;
-	data->eat_bool = false;
-	if (arg_check(av) == 1)
-		return (free_mutex_philos(data), 1);
-	if (data_init(data, av) == 1)
-		return (free_mutex_philos(data), 1);
+		return (1);
+	if (check_arg(av))
+		return (1);
+	data_init(&data, av);
+	if (is_valid_args(&data))
+	{
+		destroy_data(&data);
+		free(data.forks);
+		free(data.philo);
+		return (1);
+	}
+	if (start_thread(&data))
+	{
+		destroy_data(&data);
+		free(data.forks);
+		free(data.philo);
+		return (1);
+	}
+	destroy_data(&data);
+	free(data.forks);
+	free(data.philo);
+	return (0);
 }
 
-int	arg_check(char **av)
+int	check_arg(char	**av)
 {
 	int	i;
 	int	j;
 
-	i = 1;
-	while (av[i])
+	i = 0;
+	while (av[++i])
 	{
-		if (ft_atoi(av[i]) < 0)
-			return (1);
-		if (ft_atoi(av[i]) > 2147483647)
-			return (1);
-		i++;
-	}
-	i = 1;
-	while (av[i])
-	{
-		j = 0;
-		while (av[i][j])
+		j = -1;
+		while (av[i][++j])
 		{
-			if (!(av[i][j] >= '0' && av[i][j] <= '9'))
-				return (1);
-			j++;
+			if (av[i][j] < 48 || av[i][j] > 57)
+				return (printf("Error: Invalid argument\n"), 1);
 		}
-		i++;
 	}
-	return(-1);
+	return (0);
+}
+
+void	data_init(t_data *data, char **av)
+{
+	data->nbr_philo = ft_atol(av[1]);
+	data->life_time = ft_atol(av[2]);
+	data->eat_time = ft_atol(av[3]);
+	data->sleep_time = ft_atol(av[4]);
+	if (av[5] != NULL)
+		data->must_eat = ft_atol(av[5]);
+	else
+		data->must_eat = -1;
+	data->is_dead = 0;
+	data->forks = malloc(sizeof(pthread_mutex_t) * data->nbr_philo);
+	data->philo = malloc(sizeof(t_philo) * data->nbr_philo);
+	pthread_mutex_init(&data->dead_m, NULL);
+	pthread_mutex_init(&data->philo_count, NULL);
+	init_philo(data);
+}
+
+void	init_philo(t_data *data)
+{
+	int	i;
+
+	i = -1;
+	while (++i < data->nbr_philo)
+	{
+		data->philo[i].idx = i;
+		data->philo[i].eat_count = 0;
+		data->philo[i].step = NULL;
+		data->philo[i].data = data;
+		data->philo[i].last_eat = get_time();
+		data->philo[i].start = get_time();
+		data->philo[i].fork1 = i;
+		data->philo[i].fork2 = (i + 1) % data->nbr_philo;
+		pthread_mutex_init(&data->forks[i], NULL);
+		pthread_mutex_init(&data->philo[i].last_eat_m, NULL);
+	}
+	pthread_mutex_init(&data->print, NULL);
+}
+
+void	print_step(t_philo *philo, char *step)
+{
+	pthread_mutex_lock(&philo->data->print);
+	pthread_mutex_lock(&philo->data->dead_m);
+	if (philo->data->is_dead)
+	{
+		pthread_mutex_lock(&philo->data->dead_m);
+		pthread_mutex_lock(&philo->data->print);
+		return ;
+	}
+	pthread_mutex_unlock(&philo->data->dead_m);
+	printf("%ld %d %s\n", get_time() - philo->start, philo->idx + 1, step);
+	pthread_mutex_unlock(&philo->data->print);
 }
